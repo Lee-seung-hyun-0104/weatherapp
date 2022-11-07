@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-1.11.0.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <title>Document</title>
+</head>
+<body>
+
+    <div id="top-bar">
+        <p id="currentTime"></p>
+        <div id="systemInfo">
+            <img class="system_icon" src="icon/system/bar-chart.svg">
+            <img class="system_icon" src="icon/system/wifi.svg">
+            <img class="system_icon" src="icon/system/battery.svg">
+        </div>
+    </div>
+
+    <div id="scrollBody">
+        <div id="location">
+            <img id="geolo" class="location_icon" src="icon/system/crosshair.svg">
+            <input id="search_input">
+            <img id="search" class="location_icon" src="icon/system/search.svg">
+        </div>
+
+        <div id="weather_main">
+            <p id="city"></p>
+            <p id="weather"></p>
+            <img id="weather_icon">
+            <p id="temp"></p>
+            <div id="sen_info">
+                <p>체감온도</p>
+                <p id="temp_sen"></p>
+            </div>
+            <div id="temp_info">
+                <p class="minmax">최고</p>
+                <p id="temp_max" class="min-max"></p>
+                <p class="minmax">최저</p>
+                <p id="temp_min"></p>
+            </div>
+        </div>
+
+        <div id="todaybox">
+            <p class="boxname">오늘 날씨</p>
+            <div id="weather_today"></div>
+        </div>
+
+        <div id="sunbox">
+            <p class="boxname">일출·일몰</p>
+            <div id="sun">
+                <img id="sun_icon" src="icon/sun.png">
+                <div id="sun_info">
+                    <p id="sun_rise"></p>
+                    <p id="sun_set"></p>
+                </div>     
+            </div>
+        </div>
+        
+        <div id="windbox">
+            <img id="compass" src="icon/compass.png">
+            <p class="boxname">풍향·풍속</p>
+            <div id="wind_info">
+                <img id="windDeg" src="icon/arrow.png">
+                <p id="wind"></p>
+            </div>
+        </div>
+
+        <div id="forecastbox">
+            <p class="boxname">주간 날씨</p>
+            <div id="forecast">
+                <div id="forecast_day"></div>
+                <div id="forecast_icon"></div>
+                <div>
+                    <canvas id="tempChart" width="220" height="360"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Noto Sans KR', sans-serif;
+    }
+    body{
+        width: 100vw;
+        height: 844px;
+    }
+    #top-bar{
+        display: flex;
+        position: fixed;
+        top: 0;
+        z-index: 1;
+        justify-content: space-between;
+        width: 100vw;
+        padding: 4px 16px;
+        box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+        color: #fff;
+    }
+
+
+    #currentTime{
+        font-size: 10pt;
+    }
+    #systemInfo{
+        display: flex;
+        gap: 4px;
+    }
+    .system_icon{
+        width: 18px;
+    }
+    
+    #scrollBody{
+        display: flex;
+        position: relative;
+        overflow-y: scroll;
+        width: 100vw;
+        height: 844px;
+        padding: 42px 12px 0px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-content: flex-start; 
+    }
+    #scrollBody::-webkit-scrollbar {
+        display: none;
+    }
+
+    #location{
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        height: fit-content;
+    }
+    .location_icon{
+        width: 24px;
+    }
+
+
+
+    #weather_main{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 4px;
+
+        color: #FFFFFF;
+        text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+    }
+    #city{
+        font-size: 24pt;
+        font-weight: bold;
+    }
+    #weather{
+        font-size: 12pt;
+    }
+    #temp{
+        font-size: 40pt;
+    }
+
+    #weather_icon{
+        width: 40vw;
+    }
+    #sen_info{
+        display: flex;
+        gap: 8px;
+        font-size: 14pt;
+        font-weight: bold;
+    }
+    #temp_info{
+        display: flex;
+        font-size: 10pt;
+        font-weight: 300;
+    }
+    .minmax{
+        margin-right: 8px;
+    }
+    .min-max{
+        margin-right: 16px;
+    }
+
+
+    #todaybox{
+        display: flex;
+        padding: 8px 12px 16px 12px;
+        flex-direction: column;
+        gap: 16px;
+        overflow: hidden;
+        margin-top: 8px;
+
+        background: rgba(51, 51, 51, 0.3);
+        border: 0.5px solid rgba(180, 180, 180, 0.3);
+        box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+    }
+    .boxname{
+        color: #D0D0D0;
+    }
+    #weather_today{
+        display: flex;        
+        gap: 32px;
+        overflow-x: scroll;
+
+        color: #FFFFFF;
+        text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+    }
+    #weather_today::-webkit-scrollbar {
+        display: none;
+    }
+    .today{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .today p:nth-child(1){
+        font-size: 10pt;
+    }
+    .today p:nth-child(2){
+        font-size: 12pt;
+        font-weight: bold;
+    }
+
+    #sunbox{
+        display: flex;
+        height: 180px;
+        flex: 1 1 0;
+        flex-direction: column;
+        padding: 8px 12px 8px 12px;
+
+        background: rgba(51, 51, 51, 0.3);
+        border: 0.5px solid rgba(180, 180, 180, 0.3);
+        box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+    }
+    #sun_icon{
+        margin-top: 10px;
+    }
+    #sun{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 20px;
+
+        color: #FFFFFF;
+        text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+    }
+    #sun_info{
+        display: flex;
+        gap: 60px;
+    }
+
+    #windbox{
+        display: flex;
+        height: 180px;
+        flex: 1 1 0;
+        flex-direction: column;
+        padding: 8px 12px 8px 12px;
+        position: relative;
+
+        background: rgba(51, 51, 51, 0.3);
+        border: 0.5px solid rgba(180, 180, 180, 0.3);
+        box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+    }
+    #compass{
+        position: absolute;
+        left: 25%;
+        top: 27.5%;
+        width: 50%;
+    }
+    #wind_info{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+
+        color: #FFFFFF;
+        text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+    }
+    
+    #windDeg{
+        display: flex;
+        height: min-content;
+        transform-origin: center;
+    }
+    #forecastbox{
+        display: flex;
+        padding: 8px 12px 16px 12px;
+        flex-direction: column;
+        gap: 16px;
+        overflow: hidden;
+        width: 100%;
+        height: 380px;
+        margin-bottom: 20px;
+
+        background: rgba(51, 51, 51, 0.3);
+        border: 0.5px solid rgba(180, 180, 180, 0.3);
+        box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+    }
+
+
+    #forecast{
+        display: flex;
+        justify-content: space-around;
+        font-size: 12pt;
+
+        color: #FFFFFF;
+        text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+
+    }
+    #forecast_day{
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    #forecast_day p{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: 37px;
+        line-height: 28px;
+    }
+    #forecast_icon{
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    .day{
+        display: flex;
+        gap: 8px;
+        font-size: 11pt;
+        font-weight: 200;
+    }
+
+    .morning-top{
+        background-color: #FFA825;
+    }
+    .evening-top{
+        background-color: #56B9FF;
+    }
+    .dawn-top{
+        background-color: #211B4B;
+    }
+    .morning-scroll{
+        background: linear-gradient(180deg, #FFA825 0%, #EAE6C0 100%);
+    }
+    .evening-scroll{
+        background: linear-gradient(180deg, #56B9FF 0%, #4757D6 100%);
+    }
+    .dawn-scroll{
+        background: linear-gradient(180deg, #211B4B 0%, #04061C 100%);
+    }
+</style>
+<script>
+
+    $(function(){
+
+        // 현재 시간불러오고 24시간제로. 한자리수 시간일 때 빈칸이면 어색하니까 앞에 0 붙이기
+        let today = new Date();  
+
+        let hours = today.getHours()
+        if(hours < 10){
+            hours = '0' + hours 
+        }
+        let minutes = today.getMinutes()
+        if(minutes < 10){
+            minutes = '0' + minutes
+        }       
+        let currentTime = hours + ':' + minutes
+
+        if(8 <= hours && hours < 10){
+            $('#scrollBody').toggleClass('morning-scroll')
+            $('#top-bar').toggleClass('morning-top')
+        }else if(10 <= hours && hours < 19){
+            $('#scrollBody').toggleClass('evening-scroll')
+            $('#top-bar').toggleClass('evening-top')
+        }else{
+            $('#scrollBody').toggleClass('dawn-scroll')
+            $('#top-bar').toggleClass('dawn-top')
+        }
+
+        // 기본적으로 내 위치를 기반으로 날씨 확인
+        $(function geolo(){
+            navigator.geolocation.getCurrentPosition(function(geolocation){
+                
+            // 내 현재 위치 위도, 경도
+            let lat = geolocation.coords.latitude
+            let lon = geolocation.coords.longitude
+
+            let url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon +'&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+                    
+            // 현재 내 위치의 날씨 정보
+            $.getJSON(url, function(data){
+
+                console.log(data)
+
+                let cityName    = data.name
+
+                let weather     = data.weather[0].description
+                let temp        = data.main.temp
+                let temp_max    = data.main.temp_max
+                let temp_min    = data.main.temp_min
+                let windSpeed_kh= data.wind.speed * 3.6
+                let windDeg     = data.wind.deg 
+                let temp_sen    =   13.12
+                                    + (0.6215 * temp)
+                                    - (11.37 * Math.pow(windSpeed_kh , 0.16))
+                                    + (0.3965 * Math.pow(windSpeed_kh , 0.16) * temp)
+                let sun_rise    = moment(data.sys.sunrise * 1000).format('HH:mm')
+                let sun_set     = moment(data.sys.sunset * 1000).format('HH:mm')
+
+                let apiTime = moment(data.dt * 1000).format('MM/DD HH:mm')
+
+                $('#city').text(cityName)
+                $('#weather').text(weather)
+                $('#temp').text(temp.toFixed(0) + '°')
+                $('#temp_max').text(temp_max.toFixed(0) + '°')
+                $('#temp_min').text(temp_min.toFixed(0) + '°')
+                $('#temp_sen').text(temp_sen.toFixed(0) + '°')
+                $('#sun_rise').text(sun_rise)
+                $('#sun_set').text(sun_set)
+
+                $('#windDeg').css('transform', 'rotate(' + windDeg + 'deg)')
+                $('#wind').text(windSpeed_kh.toFixed(2) + ' km/h')
+                $('#currentTime').text(currentTime)
+
+                let icon = data.weather[0].icon
+
+                let imgURL = 'icon/weather/' + icon + '.svg'
+                $('#weather_icon').attr('src', imgURL)
+
+            })
+
+            //24시간 일기예보 데이터 
+            let urlD = 'https://pro.openweathermap.org/data/2.5/forecast/hourly?lat=' + lat + '&lon=' + lon +'&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+
+            $.getJSON(urlD, function(data){
+
+                console.log(data)
+
+                for(let i = 0; i<24; i++){
+
+                    let dt = data.list[i].dt
+                    let dayH = moment(dt * 1000).format('HH:mm')
+
+                    let icon = data.list[i].weather[0].icon
+
+                    let temp = data.list[i].main.temp.toFixed(0)
+
+                    let dom = $('<div class="today"></div>')
+                    dom.append('<p>' + dayH + '</p>')
+                    dom.append('<img style="width:32px;" id="forecastIcon" src="icon/weather_small/' + icon + '.svg">')
+                    dom.append('<p>' + temp  + '°</p>')
+                    $('#weather_today').append(dom)
+                }
+
+            })
+
+            //주간 일기예보 데이터
+            let urlW = 'https://api.openweathermap.org/data/2.5/forecast/daily?lat=' + lat + '&lon=' + lon +'&cnt=14&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+
+                $.getJSON(urlW, function(data){
+                            
+                    console.log(data)
+
+                    let tempList= []
+                    for(let i = 0; i<7; i++){
+
+                        let icon = data.list[i].weather[0].icon
+
+                        let temp = data.list[i].temp.day
+                                
+                        let dt = data.list[i].dt
+                        let dayH = moment(dt * 1000).format('DD')
+                        let dayD = moment(dt * 1000).locale("ko").format('dddd')
+                        let dayD1 = dayD.substring(0,1)
+
+                        let forecastDay = $('<div class="day"></div>')
+                        forecastDay.append('<p class="date">' + dayD1 + '</p>')
+                        forecastDay.append('<p class="date">' + dayH + '</p>')
+                        $('#forecast_day').append(forecastDay)
+
+
+                        let forecastIcon = $('<div class="forecastIcon"></div>')
+                        forecastIcon.append('<img style="width:32px;" id="forecastIcon" src="icon/weather_small/' + icon + '.svg">')
+                        $('#forecast_icon').append(forecastIcon)
+
+                        tempList[tempList.length] = temp.toFixed(0)
+                    }
+
+                    //Chart.js 위 일기예보를 차트로 보여주기
+                    const ctx = document.getElementById('tempChart').getContext('2d');
+
+                    const tempChart = new Chart(ctx, {
+                        type: 'bar',
+                        plugins: [ChartDataLabels],
+                        data: {
+                            labels: [1,1,1,1,1,1,1,1],
+                            datasets: [{
+                                axis: 'y',
+                                data: tempList,
+                                backgroundColor: '#FFFFFF',
+                                borderSkipped: 'string',
+                                borderRadius: '4'        
+                            }]
+                        },
+                        options: {
+                            maxBarThickness: 4,
+                            responsive: false,
+                            indexAxis: 'y',
+                            plugins:{
+                                legend: {
+                                    display: false,
+                                },
+                                datalabels:{
+                                    family: "'Noto Sans KR', sans-serif",
+                                    color:'#FFFFFF',
+                                    font:{size:14},
+                                    anchor: 'end',
+                                    align: 'end',
+                                    offset: 8,
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    display: false
+                                },
+                                y: {
+                                    display: false
+                                },
+                            }
+                        }
+                    })
+
+                })
+
+            })
+        })
+        
+
+        //search 버튼 클릭시 이벤트 실행
+        $('#search').click(function(){
+
+            console.log('search click')
+
+            let search = $('#search_input').val()
+
+            let sUrl = 'http://api.openweathermap.org/geo/1.0/direct?q=' + search + '&appid=4d44b81198f4929fb4d4d339daccdcad'
+
+            $.getJSON(sUrl, function(data){
+
+                let citynameKR = data[0].local_names.ko
+
+                let sLat = data[0].lat
+                let sLon = data[0].lon
+
+                $(function(){
+
+                // 검색한 도시 의 위도, 경도를 대입하여 현재 날씨 불러오기
+                let url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + sLat + '&lon=' + sLon +'&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+
+                    $.getJSON(url, function(data){
+
+                        console.log(data)
+
+                        let weather     = data.weather[0].description
+                        let temp        = data.main.temp
+                        let temp_max    = data.main.temp_max
+                        let temp_min    = data.main.temp_min
+                        let windSpeed_kh= data.wind.speed * 3.6
+                        let windDeg     = data.wind.deg 
+                        let temp_sen    =   13.12
+                                            + (0.6215 * temp)
+                                            - (11.37 * Math.pow(windSpeed_kh , 0.16))
+                                            + (0.3965 * Math.pow(windSpeed_kh , 0.16) * temp)
+                        let sun_rise    = moment(data.sys.sunrise * 1000).format('HH:mm')
+                        let sun_set     = moment(data.sys.sunset * 1000).format('HH:mm')
+
+                        let apiTime = moment(data.dt * 1000).format('MM/DD HH:mm')
+
+                        $('#city').text(citynameKR)
+                        $('#weather').text(weather)
+                        $('#temp').text(temp.toFixed(0) + '°')
+                        $('#temp_max').text(temp_max.toFixed(0) + '°')
+                        $('#temp_min').text(temp_min.toFixed(0) + '°')
+                        $('#temp_sen').text(temp_sen.toFixed(0) + '°')
+                        $('#sun_rise').text(sun_rise)
+                        $('#sun_set').text(sun_set)
+
+                        $('#windDeg').css('transform', 'rotate(' + windDeg + 'deg)')
+                        $('#wind').text(windSpeed_kh.toFixed(2) + ' km/h')
+                        $('#currentTime').text(currentTime)
+
+                        let icon = data.weather[0].icon
+
+                        let imgURL = 'icon/weather/' + icon + '.svg'
+                        $('#weather_icon').attr('src', imgURL)
+                    })
+
+                })
+
+                $(function(){
+
+                    //24시간 일기예보 데이터 
+                    let sUrl = 'https://pro.openweathermap.org/data/2.5/forecast/hourly?lat=' + sLat + '&lon=' + sLon +'&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+
+                    $.getJSON(sUrl, function(data){
+
+                        console.log(data)
+
+                        for(let i = 0; i<24; i++){
+
+                            let dt = data.list[i].dt
+                            let dayH = moment(dt * 1000).format('HH:mm')
+
+                            let icon = data.list[i].weather[0].icon
+
+                            let temp = data.list[i].main.temp.toFixed(0)
+
+                            let dom = $('<div class="today"></div>')
+                            dom.append('<p>' + dayH + '</p>')
+                            dom.append('<img style="width:32px;" id="forecastIcon" src="icon/weather_small/' + icon + '.svg">')
+                            dom.append('<p>' + temp  + '°</p>')
+                            $('#weather_today').append(dom)
+                        }
+
+                    })
+
+                })
+
+                $(function(){
+
+                    // 주간 날씨
+                    let url = 'https://api.openweathermap.org/data/2.5/forecast/daily?lat=' + sLat + '&lon=' + sLon +'&cnt=14&appid=4d44b81198f4929fb4d4d339daccdcad&units=metric&lang=kr'
+
+                    $.getJSON(url, function(data){
+                            
+                        console.log(data)
+
+                        let tempList= []
+                        for(let i = 0; i<7; i++){
+
+                            let icon = data.list[i].weather[0].icon
+
+                            let temp = data.list[i].temp.day
+                                
+                            let dt = data.list[i].dt
+                            let dayH = moment(dt * 1000).format('DD')
+                            let dayD = moment(dt * 1000).locale("ko").format('dddd')
+                            let dayD1 = dayD.substring(0,1)
+
+                            let forecastDay = $('<div class="day"></div>')
+                            forecastDay.append('<p class="date">' + dayD1 + '</p>')
+                            forecastDay.append('<p class="date">' + dayH + '</p>')
+                            $('#forecast_day').append(forecastDay)
+
+
+                            let forecastIcon = $('<div class="forecastIcon"></div>')
+                            forecastIcon.append('<img style="width:32px;" id="forecastIcon" src="icon/weather_small/' + icon + '.svg">')
+                            $('#forecast_icon').append(forecastIcon)
+
+                            tempList[tempList.length] = temp.toFixed(0)
+                        }
+
+                        //Chart.js 위 일기예보를 차트로 보여주기
+                        const ctx = document.getElementById('tempChart').getContext('2d');
+
+                        tempChart.update('active');
+
+                        const tempChart = new Chart(ctx, {
+                            type: 'bar',
+                            plugins: [ChartDataLabels],
+                            data: {
+                                labels: [1,1,1,1,1,1,1,1],
+                                datasets: [{
+                                    axis: 'y',
+                                    data: tempList,
+                                    backgroundColor: '#FFFFFF',
+                                    borderSkipped: 'string',
+                                    borderRadius: '4',
+                                        
+                                }]
+                            },
+                            options: {
+                                maxBarThickness: 4,
+                                responsive: false,
+                                indexAxis: 'y',
+                                plugins:{
+                                    legend: {
+                                        display: false,
+                                    },
+                                    datalabels:{
+                                        family: "'Noto Sans KR', sans-serif",
+                                        color:'#FFFFFF',
+                                        font:{size:14},
+                                        anchor: 'end',
+                                        align: 'end',
+                                        offset: 8,
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        ticks: {
+                                            // min: chartMin
+                                        },
+                                        beginAtZero: true,
+                                        display: false
+                                    },
+                                    y: {
+                                        display: false
+                                    },
+                                }
+                            }
+                        })
+
+                    })
+
+                })
+
+            })
+                
+        })
+    })
+
+
+
+
+
+
+
+
+                            
+
+</script>
+</html>
+

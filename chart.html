@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+</head>
+<body>
+    <div>
+        <canvas id="tempChart" width="300" height="300"></canvas>
+    </div>
+</body>
+<style>
+
+</style>
+<script>
+
+    const ctx = document.getElementById('tempChart').getContext('2d');
+
+    const tempChart = new Chart(ctx, {
+        type: 'bar',
+        plugins: [ChartDataLabels],
+        data: {
+            labels: [1,1,1,1,1,1,1,1,1,1,1,1],
+            datasets: [{
+                axis: 'y',
+                data: [14, 20, 10, 11, 12, 13,8,10,10,9,14,11],
+                backgroundColor: '#FF7000',
+                borderSkipped: 'string',
+                borderRadius: '4',
+            }]
+        },
+        options: {
+            maxBarThickness: 4,
+            responsive: false,
+            indexAxis: 'y',
+            plugins:{
+                legend: {
+                    display: false
+                },
+                datalabels:{
+                    color:'black',
+                    font:{size:16},
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 8,
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+						min: -10,
+						stepSize : 5,
+					},
+                    beginAtZero: false,
+                    display: false
+                },
+                y: {
+                    display: false
+                },
+            }
+        }
+    });
+
+</script>
+</html>
